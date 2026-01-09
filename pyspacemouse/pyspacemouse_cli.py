@@ -1,8 +1,16 @@
+#!/usr/bin/env python3
+
 import argparse
 import time
 
-from pyspacemouse import list_devices, list_available_devices, open as open_mouse, read as read_mouse, \
-    close as close_mouse, list_all_hid_devices
+from pyspacemouse import (
+    list_devices,
+    list_available_devices,
+    open as open_mouse,
+    read as read_mouse,
+    close as close_mouse,
+    list_all_hid_devices,
+)
 from pkg_resources import get_distribution
 
 
@@ -20,31 +28,36 @@ def list_spacemouse_cli():
     else:
         print("Error: No connected SpaceMouse devices found.")
 
+
 def list_all_hid_devices_cli():
     devices = list_all_hid_devices()
     if devices:
         print("All HID devices:")
-        for (product_string, manufacturer_string, vendor_id, product_id) in devices:
+        for product_string, manufacturer_string, vendor_id, product_id in devices:
             if product_string == "":
                 product_string = "Unknown"
             if manufacturer_string == "":
                 manufacturer_string = "Unknown"
-            print(f"- {product_string} by {manufacturer_string} [VID: {hex(vendor_id)}, PID: {hex(product_id)}]")
+            print(
+                f"- {product_string} by {manufacturer_string} [VID: {hex(vendor_id)}, PID: {hex(product_id)}]"
+            )
     else:
         print("Error: No HID devices found.")
+
 
 def list_supported_devices_cli():
     available_devices = list_available_devices()
     if available_devices:
         print("Available SpaceMouse devices:")
-        for (device_name, vid_id, pid_id) in available_devices:
+        for device_name, vid_id, pid_id in available_devices:
             print(f"- {device_name} [VID: {hex(vid_id)}, PID: {hex(pid_id)}]")
     else:
         print("Error: No available SpaceMouse devices found.")
 
-def test_connect_cli():
+
+def test_connect_cli(device_path):
     try:
-        success = open_mouse()
+        success = open_mouse(path=device_path)
     except Exception as e:
         print(f"Failed to open SpaceMouse: {e}")
         return
@@ -53,36 +66,53 @@ def test_connect_cli():
         print("Failed to open SpaceMouse")
         return
 
-    print("SpaceMouse opened successfully, reading x, y, z values...")
+    print("SpaceMouse opened successfully, reading state...")
     time.sleep(1)
 
     try:
         while True:
             state = read_mouse()
-            print(state.x, state.y, state.z)
-            time.sleep(0.01)
+            print(
+                f"{state.x:.3f}, {state.y:.3f}, {state.z:.3f} {state.roll:.3f}, {state.pitch:.3f}, {state.yaw:.3f} {state.buttons}"
+            )
+            time.sleep(0.5)
     except KeyboardInterrupt:
         print("KeyboardInterrupt: Exiting...")
     finally:
         close_mouse()
 
+
 def main():
-    parser = argparse.ArgumentParser(description="PySpaceMouse CLI",
-                                     epilog="For more information, visit https://spacemouse.kubaandrysek.cz/")
+    parser = argparse.ArgumentParser(
+        description="PySpaceMouse CLI",
+        epilog="For more information, visit https://spacemouse.kubaandrysek.cz/",
+    )
     parser.add_argument(
         "--version", action="store_true", help="Version of pyspacemouse"
     )
     parser.add_argument(
-        "--list-spacemouse", action="store_true", help="List connected SpaceMouse devices"
+        "--list-spacemouse",
+        action="store_true",
+        help="List connected SpaceMouse devices",
     )
     parser.add_argument(
-        "--list-supported-devices", action="store_true", help="List supported SpaceMouse devices"
+        "--list-supported-devices",
+        action="store_true",
+        help="List supported SpaceMouse devices",
     )
     parser.add_argument(
-        "--list-all-hid-devices", action="store_true", help="List all connected HID devices"
+        "--list-all-hid-devices",
+        action="store_true",
+        help="List all connected HID devices",
     )
     parser.add_argument(
-        "--test-connect", action="store_true", help="Test connect to the first available device"
+        "--test-connect",
+        action="store_true",
+        help="Test connect to the first available device",
+    )
+    parser.add_argument(
+        "--device-path",
+        help="A specific device path to connect to. Used in conjunction with --test-connect",
     )
     args = parser.parse_args()
 
@@ -95,7 +125,7 @@ def main():
     elif args.list_all_hid_devices:
         list_all_hid_devices_cli()
     elif args.test_connect:
-        test_connect_cli()
+        test_connect_cli(args.device_path)
     else:
         parser.print_help()
 
