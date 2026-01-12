@@ -1,5 +1,7 @@
 from unittest.mock import patch
+import pytest
 import pyspacemouse
+from pathlib import Path
 
 # We mock the HID class from easyhid, since it only supports constructing from C data structures
 class HIDDevice:
@@ -83,7 +85,14 @@ def test_open_no_args():
         d = pyspacemouse.open()
         assert d is not None
 
-def test_open_with_device_and_path():
+def test_open_with_device_ane_path(mocker):
     with patch("pyspacemouse.pyspacemouse.hid_enumeration", lambda: MOCK_HID_ENUMERATION):
+        mocker.patch("pathlib.Path.exists", return_value=True)
         d = pyspacemouse.open(device="SpaceMouse Wireless BT", path="/dev/hidraw1")
         assert d is not None
+
+def test_open_with_device_and_missing_path():
+    with patch("pyspacemouse.pyspacemouse.hid_enumeration", lambda: MOCK_HID_ENUMERATION):
+        with pytest.raises(FileNotFoundError):
+            d = pyspacemouse.open(device="SpaceMouse Wireless BT", path="/dev/hidraw-missing")
+            assert d is not None
