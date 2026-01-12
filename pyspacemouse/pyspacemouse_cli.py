@@ -1,7 +1,7 @@
 import argparse
 import time
 
-from pyspacemouse import list_devices, list_available_devices, open as open_mouse, read as read_mouse, \
+from pyspacemouse import get_possible_names_for_all_devices, list_supported_devices, open as open_mouse, read as read_mouse, \
     close as close_mouse, list_all_hid_devices
 from pkg_resources import get_distribution
 
@@ -12,7 +12,7 @@ def print_version_cli():
 
 
 def list_spacemouse_cli():
-    devices = list_devices()
+    devices = get_possible_names_for_all_devices()
     if devices:
         print("Connected SpaceMouse devices:")
         for device in devices:
@@ -34,13 +34,10 @@ def list_all_hid_devices_cli():
         print("Error: No HID devices found.")
 
 def list_supported_devices_cli():
-    available_devices = list_available_devices()
-    if available_devices:
-        print("Available SpaceMouse devices:")
-        for (device_name, vid_id, pid_id) in available_devices:
-            print(f"- {device_name} [VID: {hex(vid_id)}, PID: {hex(pid_id)}]")
-    else:
-        print("Error: No available SpaceMouse devices found.")
+    supported_devices = list_supported_devices()
+    print("Supported SpaceMouse devices:")
+    for (device_name, vid_id, pid_id) in supported_devices:
+        print(f"- {device_name} [VID: {hex(vid_id)}, PID: {hex(pid_id)}]")
 
 def test_connect_cli():
     try:

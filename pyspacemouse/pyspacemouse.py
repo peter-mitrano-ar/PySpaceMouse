@@ -590,8 +590,8 @@ device_specs = {
         ],  # FIT
         axis_scale=350.0,
     ),
-    "SpaceMouse Wireless [NEW]": DeviceSpec(
-        name="SpaceMouse Wireless [NEW]",
+    "SpaceMouse Wireless BT": DeviceSpec(
+        name="SpaceMouse Wireless BT",
         # vendor ID and product ID
         hid_id=[0x256F, 0xC63A],
         # LED HID usage code pair
@@ -722,6 +722,9 @@ device_specs = {
         axis_scale=350.0,
     ),
 }
+# These are the same. The config was originally added as [NEW], but later changed to BT,
+# since this is what the device reports its `product_string` as via HID
+device_specs['SpaceMouse Wireless [NEW]'] = device_specs['SpaceMouse Wireless BT']
 
 # [For the SpaceNavigator]
 # The HID data is in the format
@@ -764,37 +767,43 @@ def read():
     """
     return _active_device.read() if _active_device is not None else None
 
-
-def list_devices():
-    """Return a list of the supported devices connected
-
-    Returns:
-        A list of string names of the devices supported which were found. Empty if no supported devices found
+def hid_enumeration():
     """
-    devices = []
+    Returns HID Enumeration object, allows us to check if HID API is installed
+    and makes testing easier.
+    """
     try:
         hid = Enumeration()
+        return hid
     except AttributeError as e:
         raise Exception(
             "HID API is probably not installed. "
             "Look at https://spacemouse.kubaandrysek.cz for details."
         ) from e
 
-    all_hids = hid.find()
+
+
+def list_devices():
+    """Return a list of the supported devices connected
+
+    Returns:
+        A list of string names (keys in `device_specs`) of the devices supported which were found. Empty if no supported devices found
+    """
+    supported_device_names = []
+    hid = hid_enumeration()
+    all_hids = hid.device_list
 
     if all_hids:
         for device in all_hids:
-            devices.extend(
-                device_name
-                for device_name, spec in device_specs.items()
-                if (
-                    device.vendor_id == spec.hid_id[0]
-                    and device.product_id == spec.hid_id[1]
-                )
-            )
-    return devices
+            # Get the spec name for a device. Since the vid/pid values are unique,
+            # we can stop once we find a matching vid/pid.
+            for device_name, spec in device_specs.items():
+                if device.vendor_id == spec.hid_id[0] and device.product_id == spec.hid_id[1]:
+                    supported_device_names.append(device_name)
+                    break
+    return supported_device_names
 
-def list_available_devices():
+def list_supported_devices():
     """Return a list of all supported devices from config
 
     Returns:
@@ -811,17 +820,10 @@ def list_all_hid_devices():
     Returns:
         A list of HID devices (product_string, manufacturer_string, vendor_id, product_id)
     """
-    try:
-        hid = Enumeration()
-    except AttributeError as e:
-        raise Exception(
-            "HID API is probably not installed."
-            "Look at https://spacemouse.kubaandrysek.cz for details."
-        ) from e
-
+    hid = hid_enumeration()
     return [
         (device.product_string, device.manufacturer_string, device.vendor_id, device.product_id)
-        for device in hid.find()
+        for device in hid.device_list
     ]
 
 def openCfg(config: Config, set_nonblocking_loop: bool = True, device=None, DeviceNumber=0):
@@ -877,8 +879,8 @@ def open(
             raise Exception("No found any connected or supported devices.")
 
     found_devices = []
-    hid = Enumeration()
-    all_hids = hid.find()
+    hid = hid_enumeration()
+    all_hids = hid.device_list
     if all_hids:
         for dev in all_hids:
             if path:
