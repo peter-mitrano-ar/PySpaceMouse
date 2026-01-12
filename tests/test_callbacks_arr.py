@@ -66,8 +66,8 @@ def err_obj_num_string():
 def success_dof_callback():
     test("Move X axis")
     arr_success = [
-        pyspacemouse.DofCallback("x", lambda axis: print("x:",axis)),
-        pyspacemouse.DofCallback("pitch", lambda axis: print("pitch:", axis)),
+        pyspacemouse.DofCallback("x", lambda s, axis: print("x:",axis)),
+        pyspacemouse.DofCallback("pitch", lambda s, axis: print("pitch:", axis)),
         # pyspacemouse.ButtonCallback([1], call2),
     ]
     dev = pyspacemouse.open(dof_callback_arr=arr_success)

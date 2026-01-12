@@ -296,7 +296,7 @@ class DeviceSpec(object):
                         elif axis_val < -block_dof_callback.filter:
                             block_dof_callback.callback_minus(self.tuple_state, axis_val)
                     elif axis_val > block_dof_callback.filter or axis_val < -block_dof_callback.filter:
-                        block_dof_callback.cafllback(self.tuple_state, axis_val)
+                        block_dof_callback.callback(self.tuple_state, axis_val)
                     self.dict_state_last[axis_name] = now
 
         # only call the button callback if the button state actually changed
@@ -985,28 +985,30 @@ def check_dof_callback_arr(dof_callback_arr: List[DofCallback]) -> List[DofCallb
     for num, dof_call in enumerate(dof_callback_arr):
         if not isinstance(dof_call, DofCallback):
             raise Exception(f"'DofCallback[{num}]' is not instance of 'DofCallback'")
-            # has the correct axis name
+        # has the correct axis name
         if dof_call.axis not in ["x", "y", "z", "roll", "pitch", "yaw"]:
             raise Exception(
                 f"'DofCallback[{num}]:axis' is not string from ['x', 'y', 'z', 'roll', 'pitch', 'yaw']")
 
-            # is callback callable
+        # is callback callable
         if not callable(dof_call.callback):
             raise Exception(f"'DofCallback[{num}]:callback' is not callable")
 
-            # is sleep type float
+        # is sleep type float
         if type(dof_call.sleep) is not float:
             raise Exception(f"'DofCallback[{num}]:sleep' is not type float")
 
-            # is callback_minus callable
-        if not dof_call.callback_minus or not callable(
+        # is callback_minus callable
+        if dof_call.callback_minus and not callable(
             dof_call.callback_minus
         ):
             raise Exception(f"'DofCallback[{num}]:callback_minus' is not callable")
 
-            # is filter type float
-        if not dof_call.filter or type(dof_call.filter) is not float:
-            raise Exception(f"'DofCallback[{num}]:filter' is not type float")
+        # is filter type float
+        if dof_call.filter is None:
+            raise Exception(f"'DofCallback[{num}]:filter' is None, it must be a float")
+        if type(dof_call.filter) is not float:
+            raise Exception(f"'DofCallback[{num}]:filter' is type float")
     return dof_callback_arr
 
 
